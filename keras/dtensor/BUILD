@@ -3,7 +3,7 @@
 # can't be exposed to public yet.
 
 package(
-    default_visibility = ["//visibility:private"],
+    default_visibility = ["//keras:friends"],
     licenses = ["notice"],
 )
 

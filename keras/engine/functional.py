@@ -258,6 +258,15 @@ class Functional(training_lib.Model):
     self._set_save_spec(self._nested_inputs)
     tf_utils.assert_no_legacy_layers(self.layers)
 
+    # Note that this mehtod is used by both functional and sequential model,
+    # so we can't just this method in functional.__init__, which will miss the
+    # coverage of sequential model.
+    if self._layout_map:
+      # TODO(scottzhu): Move the import to top once the tensorflow.dtensor is
+      # available in OSS
+      from keras.dtensor import layout_map as layout_map_lib  # pylint: disable=g-import-not-at-top
+      layout_map_lib._map_functional_model_variable(self, self._layout_map)
+
   @property
   def input(self):
     """Retrieves the input tensor(s) of a layer.
