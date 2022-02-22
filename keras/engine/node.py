@@ -194,6 +194,9 @@ class Node:
       if isinstance(t, tf.Tensor):
         return backend.get_value(t).tolist()
 
+      if isinstance(t, tf.__internal__.CompositeTensor):
+        return tf_utils.serialize_composite_tensor(t)
+
       return t
 
     kwargs = tf.nest.map_structure(_serialize_keras_tensor, kwargs)

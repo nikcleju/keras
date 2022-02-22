@@ -27,9 +27,12 @@ import numpy as np
 
 import tensorflow.compat.v2 as tf
 # pylint: disable=g-direct-tensorflow-import
+from tensorflow.core.protobuf import struct_pb2
 from tensorflow.python.framework import ops
 from tensorflow.python.util.tf_export import keras_export
 # pylint: enable=g-direct-tensorflow-import
+
+_COMPOSITE_TYPE = '_COMPOSITE_TYPE'
 
 
 @keras_export('keras.utils.set_random_seed', v1=[])
@@ -605,6 +608,40 @@ def sync_to_numpy_or_python_type(tensors):
     return t.item() if np.ndim(t) == 0 else t
 
   return tf.nest.map_structure(_to_single_numpy_or_python_type, tensors)
+
+
+def is_serialized_composite_tensor(obj):
+  """Check if the object is a serialized `CompositeTensor`."""
+  try:
+    return obj[0] == _COMPOSITE_TYPE
+  except TypeError:
+    return False
+
+
+def serialize_composite_tensor(tensor):
+  """Serialize a `CompositeTensor` to json compatible format."""
+  spec = tf.type_spec_from_value(tensor)
+  tensors = []
+  for tensor in tf.nest.flatten(tensor, expand_composites=True):
+    tensors.append((tensor.dtype.name, backend.get_value(tensor).tolist()))
+  return (
+      _COMPOSITE_TYPE,
+      tf.__internal__.saved_model.encode_structure(
+          spec).SerializeToString().decode('cp1252'),
+      tensors)
+
+
+def deserialize_composite_tensor(obj):
+  """Deserialize a `CompositeTensor` from json compatible format."""
+  spec = obj[1]
+  tensors = []
+  for dtype, tensor in obj[2]:
+    tensors.append(tf.constant(tensor, dtype=tf.dtypes.as_dtype(dtype)))
+  return tf.nest.pack_sequence_as(
+      tf.__internal__.saved_model.decode_proto(
+          struct_pb2.StructuredValue.FromString(spec.encode('cp1252'))),
+      tensors,
+      expand_composites=True)
 
 
 def _astuple(attrs):

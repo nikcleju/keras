@@ -1225,7 +1225,11 @@ def reconstruct_from_config(config, custom_objects=None, created_layers=None):
             tf.nest.flatten(inbound_node.outputs)[inbound_tensor_index])
       else:
         # We received a constant w/ no Keras history attached
-        input_tensors.append(inbound_tensor_index)
+        if tf_utils.is_serialized_composite_tensor(inbound_tensor_index):
+          input_tensors.append(
+              tf_utils.deserialize_composite_tensor(inbound_tensor_index))
+        else:
+          input_tensors.append(inbound_tensor_index)
     input_tensors = tf.nest.pack_sequence_as(node_data, input_tensors)
     # Call layer on its inputs, thus creating the node
     # and building the layer if needed.

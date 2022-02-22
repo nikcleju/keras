@@ -346,5 +346,17 @@ class TestSyncToNumpyOrPythonType(parameterized.TestCase):
     self.assertEqual(tf_utils.sync_to_numpy_or_python_type(
         tensor), value)
 
+
+class TestSerializeCompositeTensor(parameterized.TestCase):
+
+  @test_combinations.generate(
+      test_combinations.combine(mode=['eager']))
+  def test_serialize_ragged_tensor(self):
+    x = tf.ragged.constant([[1., 2.], [3.]])
+    serialized = tf_utils.serialize_composite_tensor(x)
+    assert tf_utils.is_serialized_composite_tensor(serialized)
+    deserialized = tf_utils.deserialize_composite_tensor(serialized)
+    assert all(np.concatenate(tf.math.equal(x, deserialized).numpy()))
+
 if __name__ == '__main__':
   tf.test.main()
