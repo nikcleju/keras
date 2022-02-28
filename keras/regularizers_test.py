@@ -210,6 +210,54 @@ class KerasRegularizersTest(test_combinations.TestCase,
     if hasattr(regularizer, 'l2'):
       self.assertAllClose(regularizer.l2, expected_value)
 
+  @test_utils.run_v2_only
+  def test_orthogonal_regularizer(self):
+    # Test correctness.
+    factor = 0.1
+    reg_rows = regularizers.OrthogonalRegularizer(factor=factor, mode='rows')
+    reg_cols = regularizers.OrthogonalRegularizer(factor=factor, mode='columns')
+
+    # Test with square matrix
+    inputs = tf.constant([[1, 1, 1],
+                          [2, 0, 0],
+                          [0, 0, 3]], dtype='float32')
+    self.assertAllClose(reg_rows(inputs), factor * sum([2, 3, 0]) / 3.)
+    self.assertAllClose(reg_cols(inputs), factor * sum([1, 1, 1]) / 3.)
+
+    # Test with non-square matrix
+    inputs = tf.constant([[1, 1, 1, 0],
+                          [2, 0, 0, 0],
+                          [0, 0, 3, 1]], dtype='float32')
+    self.assertAllClose(reg_rows(inputs), factor * sum([2, 3, 0]) / 3.)
+    self.assertAllClose(reg_cols(inputs), factor * sum([1, 1, 1, 3]) / 4.)
+
+    # Test incorrect usage.
+    with self.assertRaisesRegex(ValueError, 'must have rank 2'):
+      reg_rows(tf.constant([1, 1], dtype='float32'))
+
+    # Test serialization
+    self.assertDictEqual(reg_cols.get_config(),
+                         {'factor': factor, 'mode': 'columns'})
+
+    # Test usage in model.
+    model_inputs = keras.Input((3,))
+    model_outputs = keras.layers.Dense(
+        4, kernel_regularizer=reg_rows)(model_inputs)
+    model = keras.Model(model_inputs, model_outputs)
+    model.compile(optimizer='rmsprop', loss='mse')
+    model.fit(np.random.random((16, 3)), np.random.random((16, 4)), epochs=1)
+
+    # Test serialization and deserialiation as part of model.
+    inputs = tf.constant([[1, 1, 1],
+                          [2, 0, 0],
+                          [0, 0, 3]], dtype='float32')
+    outputs = model(inputs)
+    config = model.get_config()
+    weights = model.get_weights()
+    model = keras.Model.from_config(config)
+    model.set_weights(weights)
+    self.assertAllClose(model(inputs), outputs, atol=1e-5)
+
 
 if __name__ == '__main__':
   tf.test.main()
