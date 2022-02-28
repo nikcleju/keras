@@ -221,16 +221,23 @@ def _deserialize_model(f, custom_objects=None, compile=True):
     model_config = f['model_config']
     if model_config is None:
         raise ValueError('No model found in config.')
-    model_config = json.loads(model_config.decode('utf-8'))
+    #model_config = json.loads(model_config.decode('utf-8'))
+    # Nicolae Cleju NiCl IIS
+    model_config = json.loads(model_config)
+
     model = model_from_config(model_config, custom_objects=custom_objects)
     model_weights_group = f['model_weights']
 
     if 'keras_version' in model_weights_group:
-        original_keras_version = model_weights_group['keras_version'].decode('utf8')
+        #original_keras_version = model_weights_group['keras_version'].decode('utf8')
+        # Nicolae Cleju NiCl IIS
+        original_keras_version = model_weights_group['keras_version']
     else:
         original_keras_version = '1'
     if 'backend' in model_weights_group:
-        original_backend = model_weights_group['backend'].decode('utf8')
+        #original_backend = model_weights_group['backend'].decode('utf8')
+        # Nicolae Cleju NiCl IIS
+        original_backend = model_weights_group['backend']
     else:
         original_backend = None
 
@@ -293,7 +300,10 @@ def _deserialize_model(f, custom_objects=None, compile=True):
                           'the model was *not* compiled. '
                           'Compile it manually.')
             return model
-        training_config = json.loads(training_config.decode('utf-8'))
+        #training_config = json.loads(training_config.decode('utf-8'))
+        # Nicolae Cleju NiCl IIS
+        training_config = json.loads(training_config)
+
         optimizer_config = training_config['optimizer_config']
         optimizer = optimizers.deserialize(optimizer_config,
                                            custom_objects=custom_objects)
