@@ -1,4 +1,16 @@
-﻿# Keras: Deep Learning for humans
+﻿# IIS fork information
+
+This is a fork of Keras with some modifications.
+
+We modified the 2.2.4 release branch to fix some incompatibility with a version of `h5.py`, 
+in the process of exporting a TensorFlow 2.0 model to ONNX.
+This modified version is intended to be used only for this purpose.
+
+The modifications are on the branch `2.2.4_savingnoutf`
+
+Origina README follows.
+
+# Keras: Deep Learning for humans
 
 ![Keras logo](https://s3.amazonaws.com/keras.io/img/keras-logo-2018-large-1200.png)
 
